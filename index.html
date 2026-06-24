@@ -1,634 +1,588 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>LED Matrix Audio Visualizer</title>
-   <!-- Using Tailwind CSS for layout and styling -->
-   <script src="https://cdn.tailwindcss.com"></script>
-   <style>
-       body {
-           margin: 0;
-           overflow: hidden;
-           background-color: #050505; /* Deep black for LED contrast */
-           color: #e5e5e5;
-           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-       }
-      
-       /* Custom scrollbar for controls */
-       ::-webkit-scrollbar {
-           width: 8px;
-       }
-       ::-webkit-scrollbar-track {
-           background: #111;
-       }
-       ::-webkit-scrollbar-thumb {
-           background: #333;
-           border-radius: 4px;
-       }
-       ::-webkit-scrollbar-thumb:hover {
-           background: #555;
-       }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED Matrix Audio Visualizer</title>
+    <!-- Using Tailwind CSS for layout and styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505; /* Deep black behind everything */
+            color: #e5e5e5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Custom scrollbar for controls */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; 
+        }
 
+        /* Glassmorphism for the control panel */
+        .controls-panel {
+            background: rgba(20, 20, 25, 0.85);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-       /* Glassmorphism for the control panel */
-       .controls-panel {
-           background: rgba(20, 20, 25, 0.85);
-           backdrop-filter: blur(10px);
-           border-right: 1px solid rgba(255, 255, 255, 0.1);
-       }
+        input[type=range] {
+            accent-color: #3b82f6;
+        }
 
-
-       input[type=range] {
-           accent-color: #3b82f6;
-       }
-
-
-       select {
-           background-image: FREDAGAINTEST1.png
-           background-repeat: no-repeat;
-           background-position: right .7rem top 50%;
-           background-size: .65rem auto;
-       }
-   </style>
+        select {
+            /* Restored the proper dropdown SVG arrow */
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23AAAAAA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right .7rem top 50%;
+            background-size: .65rem auto;
+        }
+    </style>
 </head>
 <body class="flex flex-col md:flex-row h-screen w-screen">
 
-
-   <!-- Control Panel -->
-   <div class="controls-panel w-full md:w-80 h-auto md:h-full p-6 flex flex-col gap-6 overflow-y-auto shrink-0 z-10 shadow-2xl">
-       <div>
-           <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-1">Matrix Visualizer</h1>
-           <p class="text-xs text-gray-400">Audio Reactive LED Simulator</p>
-       </div>
-
-
-       <div class="flex flex-col gap-2">
-           <button id="micBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors border border-blue-500 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-               <span id="micBtnText">Enable Audio Reactive Mode</span>
-           </button>
-           <p class="text-[10px] text-gray-500 text-center">Requires microphone permissions to sync to music</p>
-       </div>
-
-
-       <div class="flex flex-col gap-2">
-           <label class="text-sm font-semibold text-gray-300">Pattern Shape</label>
-           <select id="patternSelect" class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg p-2.5 appearance-none focus:outline-none focus:border-blue-500 transition-colors">
-               <option value="spiral">Central Spiral (Fermat)</option>
-               <option value="nested_rings">Nested Rings</option>
-               <option value="wave">Concentric Wave</option>
-               <option value="arms">Galaxy Arms</option>
-           </select>
-       </div>
-
-
-       <div class="flex flex-col gap-2">
-           <label class="text-sm font-semibold text-gray-300">Color Theme</label>
-           <select id="colorSelect" class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg p-2.5 appearance-none focus:outline-none focus:border-blue-500 transition-colors">
-               <option value="warm">Sunset Glow (Warm)</option>
-               <option value="aurora">Aurora Borealis (Cool)</option>
-               <option value="fireice">Fire & Ice</option>
-               <option value="spectrum">Full Spectrum</option>
-           </select>
-       </div>
-
-
-       <div class="flex flex-col gap-2" id="sequenceWrapper">
-           <label class="text-sm font-semibold text-gray-300 flex justify-between">
-               <span>Auto Blink Sequence</span>
-           </label>
-           <select id="sequenceSelect" class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg p-2.5 appearance-none focus:outline-none focus:border-blue-500 transition-colors">
-               <option value="multi_zone" selected>Multi-Zone (3 Rings)</option>
-               <option value="outward">Outward Radial</option>
-               <option value="inward">Inward Spiral</option>
-               <option value="clockwise">Clockwise Rotation</option>
-               <option value="anti_clockwise">Counter-Clockwise</option>
-           </select>
-       </div>
-
-
-       <!-- Multi-Zone Config Controls -->
-       <div id="multiZoneControls" class="flex flex-col gap-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-           <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Multi-Zone Config</label>
-          
-           <select id="innerZoneSelect" class="w-full bg-gray-800 text-sm text-white border border-gray-700 rounded p-2 appearance-none focus:outline-none focus:border-blue-500">
-               <option value="clockwise" selected>Inner: Clockwise</option>
-               <option value="anti_clockwise">Inner: Counter-Clockwise</option>
-               <option value="outward">Inner: Outward Radial</option>
-               <option value="inward">Inner: Inward Spiral</option>
-           </select>
-          
-           <select id="middleZoneSelect" class="w-full bg-gray-800 text-sm text-white border border-gray-700 rounded p-2 appearance-none focus:outline-none focus:border-blue-500">
-               <option value="clockwise">Middle: Clockwise</option>
-               <option value="anti_clockwise">Middle: Counter-Clockwise</option>
-               <option value="outward" selected>Middle: Outward Radial</option>
-               <option value="inward">Middle: Inward Spiral</option>
-           </select>
-          
-           <select id="outerZoneSelect" class="w-full bg-gray-800 text-sm text-white border border-gray-700 rounded p-2 appearance-none focus:outline-none focus:border-blue-500">
-               <option value="clockwise">Outer: Clockwise</option>
-               <option value="anti_clockwise" selected>Outer: Counter-Clockwise</option>
-               <option value="outward">Outer: Outward Radial</option>
-               <option value="inward">Outer: Inward Spiral</option>
-           </select>
-       </div>
-
-
-       <div class="flex flex-col gap-2 mt-2">
-           <label class="text-sm font-semibold text-gray-300 flex justify-between">
-               <span>LED Density</span>
-               <span id="densityVal" class="text-blue-400">5</span>
-           </label>
-           <input type="range" id="densitySlider" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-       </div>
-
-
-       <div class="flex flex-col gap-2">
-           <label class="text-sm font-semibold text-gray-300 flex justify-between">
-               <span id="speedLabel">Anim. Speed / Mic Sens.</span>
-               <span id="speedVal" class="text-blue-400">Medium</span>
-           </label>
-           <input type="range" id="speedSlider" min="1" max="100" value="50" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-       </div>
-      
-       <div class="flex flex-col gap-2">
-           <label class="text-sm font-semibold text-gray-300 flex justify-between">
-               <span>Bulb Size</span>
-               <span id="sizeVal" class="text-blue-400">Medium</span>
-           </label>
-           <input type="range" id="sizeSlider" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-       </div>
-
-
-       <div class="mt-auto pt-4 border-t border-gray-800">
-           <button id="resetBtn" class="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors border border-gray-700">
-               Randomize Settings
-           </button>
-       </div>
-   </div>
-
-
-   <!-- Visualization Area -->
-   <div class="flex-1 relative w-full h-full bg-[#0a0a0a] flex justify-center items-center overflow-hidden" id="canvasContainer">
-       <!-- The canvas will be dynamically sized by JS to fit the container perfectly -->
-       <canvas id="visualizerCanvas"></canvas>
-   </div>
-
-
-   <script>
-       const canvas = document.getElementById('visualizerCanvas');
-       const ctx = canvas.getContext('2d', { alpha: false }); // Optimize for solid background
-       const container = document.getElementById('canvasContainer');
-
-
-       // UI Elements
-       const patternSelect = document.getElementById('patternSelect');
-       const colorSelect = document.getElementById('colorSelect');
-       const sequenceSelect = document.getElementById('sequenceSelect');
-       const densitySlider = document.getElementById('densitySlider');
-       const speedSlider = document.getElementById('speedSlider');
-       const sizeSlider = document.getElementById('sizeSlider');
-       const resetBtn = document.getElementById('resetBtn');
-       const micBtn = document.getElementById('micBtn');
-       const micBtnText = document.getElementById('micBtnText');
-       const sequenceWrapper = document.getElementById('sequenceWrapper');
-
-
-       // Multi-zone selectors
-       const multiZoneControls = document.getElementById('multiZoneControls');
-       const innerZoneSelect = document.getElementById('innerZoneSelect');
-       const middleZoneSelect = document.getElementById('middleZoneSelect');
-       const outerZoneSelect = document.getElementById('outerZoneSelect');
-
-
-       // Labels
-       const densityVal = document.getElementById('densityVal');
-       const speedVal = document.getElementById('speedVal');
-       const sizeVal = document.getElementById('sizeVal');
-       const speedLabel = document.getElementById('speedLabel');
-
-
-       // State
-       let bulbs = [];
-       let animationTime = 0;
-       let canvasCenterX = 0;
-       let canvasCenterY = 0;
-       let maxRadius = 0;
-
-
-       // Audio State
-       let isAudioActive = false;
-       let audioContext = null;
-       let analyser = null;
-       let dataArray = null;
-       let source = null;
-
-
-       // Toggle multi-zone controls visibility
-       sequenceSelect.addEventListener('change', (e) => {
-           if (e.target.value === 'multi_zone' && !isAudioActive) {
-               multiZoneControls.style.display = 'flex';
-           } else {
-               multiZoneControls.style.display = 'none';
-           }
-       });
-
-
-       // Initialize Audio
-       async function setupAudio() {
-           if (isAudioActive) {
-               // Turn off
-               if (audioContext) {
-                   audioContext.suspend();
-               }
-               isAudioActive = false;
-               micBtn.classList.replace('bg-green-600', 'bg-blue-600');
-               micBtn.classList.replace('hover:bg-green-500', 'hover:bg-blue-500');
-               micBtn.classList.replace('border-green-500', 'border-blue-500');
-               micBtnText.textContent = "Enable Audio Reactive Mode";
-              
-               // Show sequence controls again
-               sequenceWrapper.style.opacity = '1';
-               sequenceSelect.disabled = false;
-               if (sequenceSelect.value === 'multi_zone') multiZoneControls.style.display = 'flex';
-               speedLabel.textContent = "Animation Speed";
-              
-               return;
-           }
-
-
-           try {
-               const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-              
-               if (!audioContext) {
-                   audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                   analyser = audioContext.createAnalyser();
-                   analyser.fftSize = 256; // Defines resolution of frequency data
-                   analyser.smoothingTimeConstant = 0.8;
-                   const bufferLength = analyser.frequencyBinCount;
-                   dataArray = new Uint8Array(bufferLength);
-                  
-                   source = audioContext.createMediaStreamSource(stream);
-                   source.connect(analyser);
-               } else if (audioContext.state === 'suspended') {
-                   await audioContext.resume();
-               }
-
-
-               isAudioActive = true;
-              
-               // Update UI for active audio
-               micBtn.classList.replace('bg-blue-600', 'bg-green-600');
-               micBtn.classList.replace('hover:bg-blue-500', 'hover:bg-green-500');
-               micBtn.classList.replace('border-blue-500', 'border-green-500');
-               micBtnText.textContent = "Listening to Audio...";
-              
-               // Dim auto-sequence controls
-               sequenceWrapper.style.opacity = '0.4';
-               sequenceSelect.disabled = true;
-               multiZoneControls.style.display = 'none';
-               speedLabel.textContent = "Audio Sensitivity";
-
-
-           } catch (err) {
-               console.error('Error accessing microphone:', err);
-               alert('Could not access the microphone. Please ensure permissions are granted.');
-           }
-       }
-
-
-       micBtn.addEventListener('click', setupAudio);
-
-
-       // Resize handler
-       function resizeCanvas() {
-           const rect = container.getBoundingClientRect();
-           // Handle high DPI displays
-           const dpr = window.devicePixelRatio || 1;
-           canvas.width = rect.width * dpr;
-           canvas.height = rect.height * dpr;
-           canvas.style.width = `${rect.width}px`;
-           canvas.style.height = `${rect.height}px`;
-          
-           ctx.scale(dpr, dpr);
-           canvasCenterX = rect.width / 2;
-           canvasCenterY = rect.height / 2;
-          
-           generatePattern();
-       }
-
-
-       window.addEventListener('resize', resizeCanvas);
-
-
-       // Core logic: Calculate color based on theme
-       function getColor(normalizedDist, angle, theme) {
-           let h, s = 90, l = 60;
-           switch(theme) {
-               case 'warm':
-                   // Yellow/Orange center to deep Red outer
-                   h = 60 - (normalizedDist * 60);
-                   break;
-               case 'aurora':
-                   // Green center to deep Purple outer
-                   h = 120 + (normalizedDist * 160);
-                   break;
-               case 'fireice':
-                   // Warm center, hard transition to icy blue
-                   h = normalizedDist < 0.5 ? 30 : 200;
-                   s = 100;
-                   break;
-               case 'spectrum':
-                   // Full rainbow based on angle
-                   h = (angle * 180 / Math.PI + 360) % 360;
-                   break;
-               default:
-                   h = 0;
-           }
-           return {h, s, l};
-       }
-
-
-       // Generate the dot matrix logic
-       function generatePattern() {
-           bulbs = [];
-           const pattern = patternSelect.value;
-           const density = parseInt(densitySlider.value);
-           const theme = colorSelect.value;
-          
-           let rawBulbs = [];
-           let maxRawDist = 0;
-
-
-           if (pattern === 'spiral') {
-               const numBulbs = 100 + (density * 100);
-               const goldenAngle = 137.508 * (Math.PI / 180);
-               for (let i = 0; i < numBulbs; i++) {
-                   const angle = i * goldenAngle;
-                   const r = 5 * Math.sqrt(i); // Base scaling
-                   rawBulbs.push({ r, angle });
-                   if (r > maxRawDist) maxRawDist = r;
-               }
-           }
-           else if (pattern === 'nested_rings' || pattern === 'wave') {
-               const numRings = 4 + (density * 2);
-               for (let ring = 1; ring <= numRings; ring++) {
-                   const r = ring * 20; // Base spacing
-                   const bulbsInRing = ring * 8; // More bulbs in outer rings
-                   for (let i = 0; i < bulbsInRing; i++) {
-                       const angle = (i / bulbsInRing) * Math.PI * 2;
-                       rawBulbs.push({ r, angle });
-                   }
-                   if (r > maxRawDist) maxRawDist = r;
-               }
-           }
-           else if (pattern === 'arms') {
-               const numArms = 3 + Math.floor(density / 3);
-               const bulbsPerArm = 20 + (density * 10);
-               for (let arm = 0; arm < numArms; arm++) {
-                   const armOffset = (arm / numArms) * Math.PI * 2;
-                   for (let i = 0; i < bulbsPerArm; i++) {
-                       const t = i / bulbsPerArm;
-                       const r = t * 200;
-                       const angle = armOffset + (t * Math.PI * 2); // Spiral twist
-                      
-                       // Add some organic scatter
-                       const scatter = (Math.random() - 0.5) * 10 * t;
-                       rawBulbs.push({ r: r + scatter, angle: angle + (scatter/100) });
-                       if (r > maxRawDist) maxRawDist = r;
-                   }
-               }
-           }
-
-
-           // SCALING LOGIC: Ensure the pattern fits perfectly in the canvas
-           // We find the smallest dimension and leave a 10% margin
-           const smallestDimension = Math.min(canvasCenterX * 2, canvasCenterY * 2);
-           const targetMaxRadius = (smallestDimension / 2) * 0.90;
-          
-           const scaleFactor = targetMaxRadius / (maxRawDist || 1);
-           maxRadius = targetMaxRadius;
-
-
-           // Map raw coordinates to final scaled canvas coordinates and assign colors
-           bulbs = rawBulbs.map(b => {
-               const scaledR = b.r * scaleFactor;
-               const normalizedDist = scaledR / targetMaxRadius;
-               const color = getColor(normalizedDist, b.angle, theme);
-              
-               return {
-                   x: Math.cos(b.angle) * scaledR,
-                   y: Math.sin(b.angle) * scaledR,
-                   dist: scaledR,
-                   normalizedDist: normalizedDist,
-                   angle: b.angle,
-                   color: color
-               };
-           });
-       }
-
-
-       // Helper to calculate animation offset based on sequence type
-       function calculatePhaseOffset(type, b, isMultiZone = false) {
-           const distMulti = isMultiZone ? 10 : 4; // Tighter rings for smaller zones
-           const angleMulti = isMultiZone ? 3 : 2; // Faster rotation for smaller zones
-          
-           switch(type) {
-               case 'outward': return b.normalizedDist * Math.PI * distMulti;
-               case 'inward': return (1 - b.normalizedDist) * Math.PI * distMulti;
-               case 'clockwise': return b.angle * angleMulti;
-               case 'anti_clockwise': return -b.angle * angleMulti;
-               default: return 0;
-           }
-       }
-
-
-       // Animation Loop
-       function animate() {
-           // Draw background (optimized solid fill instead of clearRect)
-           ctx.fillStyle = '#050505';
-           ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-
-           const speedMultiplier = parseInt(speedSlider.value) / 50;
-           const sequence = sequenceSelect.value;
-           const baseBulbSize = parseInt(sizeSlider.value);
-          
-           if (isAudioActive && analyser) {
-               // Populate dataArray with frequency data
-               analyser.getByteFrequencyData(dataArray);
-           } else {
-               // Increment time based on speed if not in audio mode
-               animationTime += 0.02 * speedMultiplier;
-           }
-
-
-           // Pre-calculate center translation to save operations
-           ctx.save();
-           ctx.translate(canvasCenterX, canvasCenterY);
-
-
-           for (let i = 0; i < bulbs.length; i++) {
-               const b = bulbs[i];
-               let intensity = 0;
-
-
-               if (isAudioActive) {
-                   // --- AUDIO REACTIVE LOGIC ---
-                  
-                   // Map distance from center (0 to 1) to frequency bin index
-                   // Using a power curve to focus more nodes on the punchy low/mid frequencies
-                   const maxBin = Math.floor(analyser.frequencyBinCount * 0.7); // Ignore highest frequencies
-                   const binIndex = Math.floor(Math.pow(b.normalizedDist, 1.2) * maxBin);
-                  
-                   // Get raw audio value (0 to 255)
-                   const audioVal = dataArray[binIndex] || 0;
-                  
-                   // Normalize to 0-1
-                   let normalizedAudio = audioVal / 255;
-                  
-                   // Sensitivity adjustment via slider (0.1 to 2.0 multiplier)
-                   const sensitivity = (parseInt(speedSlider.value) / 50);
-                   normalizedAudio *= sensitivity;
-
-
-                   // Apply threshold to maintain the "dot matrix blink" look
-                   intensity = normalizedAudio > 0.65 ? 1 : (normalizedAudio > 0.4 ? 0.3 : 0);
-
-
-               } else {
-                   // --- AUTO SEQUENCE LOGIC ---
-                   let phaseOffset = 0;
-                  
-                   // Calculate phase offset based on sequence type
-                   if (sequence === 'multi_zone') {
-                       if (b.normalizedDist < 0.33) {
-                           phaseOffset = calculatePhaseOffset(innerZoneSelect.value, b, true);
-                       } else if (b.normalizedDist < 0.66) {
-                           phaseOffset = calculatePhaseOffset(middleZoneSelect.value, b, true);
-                       } else {
-                           phaseOffset = calculatePhaseOffset(outerZoneSelect.value, b, true);
-                       }
-                   } else {
-                       phaseOffset = calculatePhaseOffset(sequence, b, false);
-                   }
-
-
-                   // Add wave offset if pattern is wave
-                   if (patternSelect.value === 'wave') {
-                       phaseOffset += Math.sin(b.normalizedDist * Math.PI * 4) * 2;
-                   }
-
-
-                   // Calculate intensity using Sine wave (0 to 1)
-                   let rawIntensity = (Math.sin(animationTime - phaseOffset) + 1) / 2;
-                   intensity = rawIntensity > 0.8 ? 1 : 0;
-               }
-              
-               // Base size scales slightly with screen size, modified by slider and intensity
-               const maxBulbRadius = (smallestDim() * 0.005) + (baseBulbSize * 0.5);
-               const currentRadius = maxBulbRadius * 0.4 + (maxBulbRadius * 0.6 * intensity);
-
-
-               // --- RENDERING UNIVERSAL HUB LED BULB ---
-              
-               // 1. Base 'Off' state (physical dome)
-               ctx.beginPath();
-               ctx.arc(b.x, b.y, maxBulbRadius * 0.8, 0, Math.PI * 2);
-               ctx.fillStyle = `rgba(20, 20, 20, 0.8)`;
-               ctx.fill();
-
-
-               if (intensity > 0.05) {
-                   const {h, s, l} = b.color;
-                  
-                   // 2. Glow (Shadow)
-                   ctx.shadowBlur = 20 * intensity;
-                   ctx.shadowColor = `hsl(${h}, ${s}%, ${l}%)`;
-                  
-                   // 3. Colored Body
-                   ctx.beginPath();
-                   ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
-                   ctx.fillStyle = `hsla(${h}, ${s}%, ${l}%, ${intensity * 0.9})`;
-                   ctx.fill();
-
-
-                   // 4. Bright Core (Simulates the actual diode)
-                   ctx.shadowBlur = 0; // Disable shadow for core
-                   ctx.beginPath();
-                   ctx.arc(b.x, b.y, currentRadius * 0.4, 0, Math.PI * 2);
-                   ctx.fillStyle = `rgba(255, 255, 255, ${intensity})`;
-                   ctx.fill();
-               }
-           }
-
-
-           ctx.restore();
-           requestAnimationFrame(animate);
-       }
-
-
-       // Utility: Get smallest dimension
-       function smallestDim() {
-           return Math.min(canvasCenterX * 2, canvasCenterY * 2);
-       }
-
-
-       // Event Listeners for UI
-       patternSelect.addEventListener('change', generatePattern);
-       colorSelect.addEventListener('change', generatePattern);
-       densitySlider.addEventListener('input', (e) => {
-           densityVal.textContent = e.target.value;
-           generatePattern();
-       });
-       sizeSlider.addEventListener('input', (e) => {
-           const val = parseInt(e.target.value);
-           sizeVal.textContent = val < 4 ? 'Small' : val > 7 ? 'Large' : 'Medium';
-       });
-       speedSlider.addEventListener('input', (e) => {
-           const val = parseInt(e.target.value);
-           if (isAudioActive) {
-               speedVal.textContent = val < 30 ? 'Low' : val > 70 ? 'High' : 'Medium';
-           } else {
-               speedVal.textContent = val < 30 ? 'Slow' : val > 70 ? 'Fast' : 'Medium';
-           }
-       });
-
-
-       resetBtn.addEventListener('click', () => {
-           const patterns = Array.from(patternSelect.options).map(o => o.value);
-           const colors = Array.from(colorSelect.options).map(o => o.value);
-           const sequences = Array.from(sequenceSelect.options).map(o => o.value);
-           const zoneAnims = ['clockwise', 'anti_clockwise', 'outward', 'inward'];
-          
-           patternSelect.value = patterns[Math.floor(Math.random() * patterns.length)];
-           colorSelect.value = colors[Math.floor(Math.random() * colors.length)];
-           sequenceSelect.value = sequences[Math.floor(Math.random() * sequences.length)];
-          
-           innerZoneSelect.value = zoneAnims[Math.floor(Math.random() * zoneAnims.length)];
-           middleZoneSelect.value = zoneAnims[Math.floor(Math.random() * zoneAnims.length)];
-           outerZoneSelect.value = zoneAnims[Math.floor(Math.random() * zoneAnims.length)];
-          
-           // Trigger display toggle check
-           sequenceSelect.dispatchEvent(new Event('change'));
-          
-           densitySlider.value = Math.floor(Math.random() * 8) + 2;
-           densityVal.textContent = densitySlider.value;
-          
-           speedSlider.value = Math.floor(Math.random() * 80) + 10;
-           speedVal.dispatchEvent(new Event('input')); // Update label text based on context
-          
-           generatePattern();
-       });
-
-
-       // Initialize
-       resizeCanvas(); // This also calls generatePattern()
-       animate();      // Start loop
-
-
-   </script>
+    <!-- Control Panel -->
+    <div class="controls-panel w-full md:w-80 h-auto md:h-full p-6 flex flex-col gap-6 overflow-y-auto shrink-0 z-20 shadow-2xl">
+        <div>
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-1">Matrix Visualizer</h1>
+            <p class="text-xs text-gray-400">Audio Reactive LED Simulator</p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <button id="micBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors border border-blue-500 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                <span id="micBtnText">Enable Audio Reactive Mode</span>
+            </button>
+            <p class="text-[10px] text-gray-500 text-center">Requires microphone permissions to sync to music</p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-300">Pattern Shape</label>
+            <select id="patternSelect" class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg p-2.5 appearance-none focus:outline-none focus:border-blue-500 transition-colors">
+                <option value="spiral">Central Spiral (Fermat)</option>
+                <option value="nested_rings">Nested Rings</option>
+                <option value="wave">Concentric Wave</option>
+                <option value="arms">Galaxy Arms</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-300">Color Theme</label>
+            <select id="colorSelect" class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg p-2.5 appearance-none focus:outline-none focus:border-blue-500 transition-colors">
+                <option value="warm">Sunset Glow (Warm)</option>
+                <option value="aurora">Aurora Borealis (Cool)</option>
+                <option value="fireice">Fire & Ice</option>
+                <option value="spectrum">Full Spectrum</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-2" id="sequenceWrapper">
+            <label class="text-sm font-semibold text-gray-300 flex justify-between">
+                <span>Auto Blink Sequence</span>
+            </label>
+            <select id="sequenceSelect" class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg p-2.5 appearance-none focus:outline-none focus:border-blue-500 transition-colors">
+                <option value="multi_zone" selected>Multi-Zone (3 Rings)</option>
+                <option value="outward">Outward Radial</option>
+                <option value="inward">Inward Spiral</option>
+                <option value="clockwise">Clockwise Rotation</option>
+                <option value="anti_clockwise">Counter-Clockwise</option>
+            </select>
+        </div>
+
+        <!-- Multi-Zone Config Controls -->
+        <div id="multiZoneControls" class="flex flex-col gap-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Multi-Zone Config</label>
+            
+            <select id="innerZoneSelect" class="w-full bg-gray-800 text-sm text-white border border-gray-700 rounded p-2 appearance-none focus:outline-none focus:border-blue-500">
+                <option value="clockwise" selected>Inner: Clockwise</option>
+                <option value="anti_clockwise">Inner: Counter-Clockwise</option>
+                <option value="outward">Inner: Outward Radial</option>
+                <option value="inward">Inner: Inward Spiral</option>
+            </select>
+            
+            <select id="middleZoneSelect" class="w-full bg-gray-800 text-sm text-white border border-gray-700 rounded p-2 appearance-none focus:outline-none focus:border-blue-500">
+                <option value="clockwise">Middle: Clockwise</option>
+                <option value="anti_clockwise">Middle: Counter-Clockwise</option>
+                <option value="outward" selected>Middle: Outward Radial</option>
+                <option value="inward">Middle: Inward Spiral</option>
+            </select>
+            
+            <select id="outerZoneSelect" class="w-full bg-gray-800 text-sm text-white border border-gray-700 rounded p-2 appearance-none focus:outline-none focus:border-blue-500">
+                <option value="clockwise">Outer: Clockwise</option>
+                <option value="anti_clockwise" selected>Outer: Counter-Clockwise</option>
+                <option value="outward">Outer: Outward Radial</option>
+                <option value="inward">Outer: Inward Spiral</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col gap-2 mt-2">
+            <label class="text-sm font-semibold text-gray-300 flex justify-between">
+                <span>LED Density</span>
+                <span id="densityVal" class="text-blue-400">5</span>
+            </label>
+            <input type="range" id="densitySlider" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-300 flex justify-between">
+                <span id="speedLabel">Anim. Speed / Mic Sens.</span>
+                <span id="speedVal" class="text-blue-400">Medium</span>
+            </label>
+            <input type="range" id="speedSlider" min="1" max="100" value="50" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+        
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-gray-300 flex justify-between">
+                <span>Bulb Size</span>
+                <span id="sizeVal" class="text-blue-400">Medium</span>
+            </label>
+            <input type="range" id="sizeSlider" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="mt-auto pt-4 border-t border-gray-800">
+            <button id="resetBtn" class="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors border border-gray-700">
+                Randomize Settings
+            </button>
+        </div>
+    </div>
+
+    <!-- Visualization Area (Image Background + Transparent Canvas) -->
+    <div class="flex-1 relative w-full h-full flex justify-center items-center overflow-hidden z-10" id="canvasContainer">
+        
+        <!-- PROPERLY PLACED BACKGROUND IMAGE -->
+        <img src="FREDAGAINTEST1.png" class="absolute w-full h-full object-contain pointer-events-none z-0" alt="Hardware Background">
+
+        <!-- The canvas will be dynamically sized by JS and floated on top of the image -->
+        <canvas id="visualizerCanvas" class="absolute z-10 w-full h-full"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('visualizerCanvas');
+        // TRANSPARENCY FIX: Removed { alpha: false } so the canvas is see-through
+        const ctx = canvas.getContext('2d'); 
+        const container = document.getElementById('canvasContainer');
+
+        // UI Elements
+        const patternSelect = document.getElementById('patternSelect');
+        const colorSelect = document.getElementById('colorSelect');
+        const sequenceSelect = document.getElementById('sequenceSelect');
+        const densitySlider = document.getElementById('densitySlider');
+        const speedSlider = document.getElementById('speedSlider');
+        const sizeSlider = document.getElementById('sizeSlider');
+        const resetBtn = document.getElementById('resetBtn');
+        const micBtn = document.getElementById('micBtn');
+        const micBtnText = document.getElementById('micBtnText');
+        const sequenceWrapper = document.getElementById('sequenceWrapper');
+
+        // Multi-zone selectors
+        const multiZoneControls = document.getElementById('multiZoneControls');
+        const innerZoneSelect = document.getElementById('innerZoneSelect');
+        const middleZoneSelect = document.getElementById('middleZoneSelect');
+        const outerZoneSelect = document.getElementById('outerZoneSelect');
+
+        // Labels
+        const densityVal = document.getElementById('densityVal');
+        const speedVal = document.getElementById('speedVal');
+        const sizeVal = document.getElementById('sizeVal');
+        const speedLabel = document.getElementById('speedLabel');
+
+        // State
+        let bulbs = [];
+        let animationTime = 0;
+        let canvasCenterX = 0;
+        let canvasCenterY = 0;
+        let maxRadius = 0;
+
+        // Audio State
+        let isAudioActive = false;
+        let audioContext = null;
+        let analyser = null;
+        let dataArray = null;
+        let source = null;
+
+        // Toggle multi-zone controls visibility
+        sequenceSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'multi_zone' && !isAudioActive) {
+                multiZoneControls.style.display = 'flex';
+            } else {
+                multiZoneControls.style.display = 'none';
+            }
+        });
+
+        // Initialize Audio
+        async function setupAudio() {
+            if (isAudioActive) {
+                // Turn off
+                if (audioContext) {
+                    audioContext.suspend();
+                }
+                isAudioActive = false;
+                micBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                micBtn.classList.replace('hover:bg-green-500', 'hover:bg-blue-500');
+                micBtn.classList.replace('border-green-500', 'border-blue-500');
+                micBtnText.textContent = "Enable Audio Reactive Mode";
+                
+                // Show sequence controls again
+                sequenceWrapper.style.opacity = '1';
+                sequenceSelect.disabled = false;
+                if (sequenceSelect.value === 'multi_zone') multiZoneControls.style.display = 'flex';
+                speedLabel.textContent = "Animation Speed";
+                
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 256; // Defines resolution of frequency data
+                    analyser.smoothingTimeConstant = 0.8;
+                    const bufferLength = analyser.frequencyBinCount;
+                    dataArray = new Uint8Array(bufferLength);
+                    
+                    source = audioContext.createMediaStreamSource(stream);
+                    source.connect(analyser);
+                } else if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+
+                isAudioActive = true;
+                
+                // Update UI for active audio
+                micBtn.classList.replace('bg-blue-600', 'bg-green-600');
+                micBtn.classList.replace('hover:bg-blue-500', 'hover:bg-green-500');
+                micBtn.classList.replace('border-blue-500', 'border-green-500');
+                micBtnText.textContent = "Listening to Audio...";
+                
+                // Dim auto-sequence controls
+                sequenceWrapper.style.opacity = '0.4';
+                sequenceSelect.disabled = true;
+                multiZoneControls.style.display = 'none';
+                speedLabel.textContent = "Audio Sensitivity";
+
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                alert('Could not access the microphone. Please ensure permissions are granted.');
+            }
+        }
+
+        micBtn.addEventListener('click', setupAudio);
+
+        // Resize handler
+        function resizeCanvas() {
+            const rect = container.getBoundingClientRect();
+            // Handle high DPI displays
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            
+            ctx.scale(dpr, dpr);
+            canvasCenterX = rect.width / 2;
+            canvasCenterY = rect.height / 2;
+            
+            generatePattern();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // Core logic: Calculate color based on theme
+        function getColor(normalizedDist, angle, theme) {
+            let h, s = 90, l = 60;
+            switch(theme) {
+                case 'warm':
+                    // Yellow/Orange center to deep Red outer
+                    h = 60 - (normalizedDist * 60);
+                    break;
+                case 'aurora':
+                    // Green center to deep Purple outer
+                    h = 120 + (normalizedDist * 160);
+                    break;
+                case 'fireice':
+                    // Warm center, hard transition to icy blue
+                    h = normalizedDist < 0.5 ? 30 : 200;
+                    s = 100;
+                    break;
+                case 'spectrum':
+                    // Full rainbow based on angle
+                    h = (angle * 180 / Math.PI + 360) % 360;
+                    break;
+                default:
+                    h = 0;
+            }
+            return {h, s, l};
+        }
+
+        // Generate the dot matrix logic
+        function generatePattern() {
+            bulbs = [];
+            const pattern = patternSelect.value;
+            const density = parseInt(densitySlider.value);
+            const theme = colorSelect.value;
+            
+            let rawBulbs = [];
+            let maxRawDist = 0;
+
+            if (pattern === 'spiral') {
+                const numBulbs = 100 + (density * 100);
+                const goldenAngle = 137.508 * (Math.PI / 180);
+                for (let i = 0; i < numBulbs; i++) {
+                    const angle = i * goldenAngle;
+                    const r = 5 * Math.sqrt(i); // Base scaling
+                    rawBulbs.push({ r, angle });
+                    if (r > maxRawDist) maxRawDist = r;
+                }
+            }
+            else if (pattern === 'nested_rings' || pattern === 'wave') {
+                const numRings = 4 + (density * 2);
+                for (let ring = 1; ring <= numRings; ring++) {
+                    const r = ring * 20; // Base spacing
+                    const bulbsInRing = ring * 8; // More bulbs in outer rings
+                    for (let i = 0; i < bulbsInRing; i++) {
+                        const angle = (i / bulbsInRing) * Math.PI * 2;
+                        rawBulbs.push({ r, angle });
+                    }
+                    if (r > maxRawDist) maxRawDist = r;
+                }
+            }
+            else if (pattern === 'arms') {
+                const numArms = 3 + Math.floor(density / 3);
+                const bulbsPerArm = 20 + (density * 10);
+                for (let arm = 0; arm < numArms; arm++) {
+                    const armOffset = (arm / numArms) * Math.PI * 2;
+                    for (let i = 0; i < bulbsPerArm; i++) {
+                        const t = i / bulbsPerArm;
+                        const r = t * 200;
+                        const angle = armOffset + (t * Math.PI * 2); // Spiral twist
+                        
+                        // Add some organic scatter
+                        const scatter = (Math.random() - 0.5) * 10 * t;
+                        rawBulbs.push({ r: r + scatter, angle: angle + (scatter/100) });
+                        if (r > maxRawDist) maxRawDist = r;
+                    }
+                }
+            }
+
+            // SCALING LOGIC: Ensure the pattern fits perfectly in the canvas
+            // We find the smallest dimension and leave a 10% margin
+            const smallestDimension = Math.min(canvasCenterX * 2, canvasCenterY * 2);
+            const targetMaxRadius = (smallestDimension / 2) * 0.90;
+            
+            const scaleFactor = targetMaxRadius / (maxRawDist || 1);
+            maxRadius = targetMaxRadius;
+
+            // Map raw coordinates to final scaled canvas coordinates and assign colors
+            bulbs = rawBulbs.map(b => {
+                const scaledR = b.r * scaleFactor;
+                const normalizedDist = scaledR / targetMaxRadius;
+                const color = getColor(normalizedDist, b.angle, theme);
+                
+                return {
+                    x: Math.cos(b.angle) * scaledR,
+                    y: Math.sin(b.angle) * scaledR,
+                    dist: scaledR,
+                    normalizedDist: normalizedDist,
+                    angle: b.angle,
+                    color: color
+                };
+            });
+        }
+
+        // Helper to calculate animation offset based on sequence type
+        function calculatePhaseOffset(type, b, isMultiZone = false) {
+            const distMulti = isMultiZone ? 10 : 4; // Tighter rings for smaller zones
+            const angleMulti = isMultiZone ? 3 : 2; // Faster rotation for smaller zones
+            
+            switch(type) {
+                case 'outward': return b.normalizedDist * Math.PI * distMulti;
+                case 'inward': return (1 - b.normalizedDist) * Math.PI * distMulti;
+                case 'clockwise': return b.angle * angleMulti;
+                case 'anti_clockwise': return -b.angle * angleMulti;
+                default: return 0;
+            }
+        }
+
+        // Animation Loop
+        function animate() {
+            // TRANSPARENCY FIX: Replaced solid black 'fillRect' with 'clearRect'
+            // This erases the old frame leaving transparency so the image shows through
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const speedMultiplier = parseInt(speedSlider.value) / 50;
+            const sequence = sequenceSelect.value;
+            const baseBulbSize = parseInt(sizeSlider.value);
+            
+            if (isAudioActive && analyser) {
+                // Populate dataArray with frequency data
+                analyser.getByteFrequencyData(dataArray);
+            } else {
+                // Increment time based on speed if not in audio mode
+                animationTime += 0.02 * speedMultiplier;
+            }
+
+            // Pre-calculate center translation to save operations
+            ctx.save();
+            ctx.translate(canvasCenterX, canvasCenterY);
+
+            for (let i = 0; i < bulbs.length; i++) {
+                const b = bulbs[i];
+                let intensity = 0;
+
+                if (isAudioActive) {
+                    // --- AUDIO REACTIVE LOGIC ---
+                    
+                    // Map distance from center (0 to 1) to frequency bin index
+                    // Using a power curve to focus more nodes on the punchy low/mid frequencies
+                    const maxBin = Math.floor(analyser.frequencyBinCount * 0.7); // Ignore highest frequencies
+                    const binIndex = Math.floor(Math.pow(b.normalizedDist, 1.2) * maxBin);
+                    
+                    // Get raw audio value (0 to 255)
+                    const audioVal = dataArray[binIndex] || 0;
+                    
+                    // Normalize to 0-1
+                    let normalizedAudio = audioVal / 255;
+                    
+                    // Sensitivity adjustment via slider (0.1 to 2.0 multiplier)
+                    const sensitivity = (parseInt(speedSlider.value) / 50);
+                    normalizedAudio *= sensitivity;
+
+                    // Apply threshold to maintain the "dot matrix blink" look
+                    intensity = normalizedAudio > 0.65 ? 1 : (normalizedAudio > 0.4 ? 0.3 : 0);
+
+                } else {
+                    // --- AUTO SEQUENCE LOGIC ---
+                    let phaseOffset = 0;
+                    
+                    // Calculate phase offset based on sequence type
+                    if (sequence === 'multi_zone') {
+                        if (b.normalizedDist < 0.33) {
+                            phaseOffset = calculatePhaseOffset(innerZoneSelect.value, b, true);
+                        } else if (b.normalizedDist < 0.66) {
+                            phaseOffset = calculatePhaseOffset(middleZoneSelect.value, b, true);
+                        } else {
+                            phaseOffset = calculatePhaseOffset(outerZoneSelect.value, b, true);
+                        }
+                    } else {
+                        phaseOffset = calculatePhaseOffset(sequence, b, false);
+                    }
+
+                    // Add wave offset if pattern is wave
+                    if (patternSelect.value === 'wave') {
+                        phaseOffset += Math.sin(b.normalizedDist * Math.PI * 4) * 2;
+                    }
+
+                    // Calculate intensity using Sine wave (0 to 1)
+                    let rawIntensity = (Math.sin(animationTime - phaseOffset) + 1) / 2;
+                    intensity = rawIntensity > 0.8 ? 1 : 0;
+                }
+                
+                // Base size scales slightly with screen size, modified by slider and intensity
+                const maxBulbRadius = (smallestDim() * 0.005) + (baseBulbSize * 0.5);
+                const currentRadius = maxBulbRadius * 0.4 + (maxBulbRadius * 0.6 * intensity);
+
+                // --- RENDERING UNIVERSAL HUB LED BULB ---
+                
+                // 1. Base 'Off' state (physical dome)
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, maxBulbRadius * 0.8, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(10, 10, 10, 0.4)`; // Adjusted to let background peek through
+                ctx.fill();
+
+                if (intensity > 0.05) {
+                    const {h, s, l} = b.color;
+                    
+                    // 2. Glow (Shadow)
+                    ctx.shadowBlur = 20 * intensity;
+                    ctx.shadowColor = `hsl(${h}, ${s}%, ${l}%)`;
+                    
+                    // 3. Colored Body
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${h}, ${s}%, ${l}%, ${intensity * 0.9})`;
+                    ctx.fill();
+
+                    // 4. Bright Core (Simulates the actual diode)
+                    ctx.shadowBlur = 0; // Disable shadow for core
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, currentRadius * 0.4, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${intensity})`;
+                    ctx.fill();
+                }
+            }
+
+            ctx.restore();
+            requestAnimationFrame(animate);
+        }
+
+        // Utility: Get smallest dimension
+        function smallestDim() {
+            return Math.min(canvasCenterX * 2, canvasCenterY * 2);
+        }
+
+        // Event Listeners for UI
+        patternSelect.addEventListener('change', generatePattern);
+        colorSelect.addEventListener('change', generatePattern);
+        densitySlider.addEventListener('input', (e) => {
+            densityVal.textContent = e.target.value;
+            generatePattern();
+        });
+        sizeSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            sizeVal.textContent = val < 4 ? 'Small' : val > 7 ? 'Large' : 'Medium';
+        });
+        speedSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            if (isAudioActive) {
+                speedVal.textContent = val < 30 ? 'Low' : val > 70 ? 'High' : 'Medium';
+            } else {
+                speedVal.textContent = val < 30 ? 'Slow' : val > 70 ? 'Fast' : 'Medium';
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            const patterns = Array.from(patternSelect.options).map(o => o.value);
+            const colors = Array.from(colorSelect.options).map(o => o.value);
+            const sequences = Array.from(sequenceSelect.options).map(o => o.value);
+            const zoneAnims = ['clockwise', 'anti_clockwise', 'outward', 'inward'];
+            
+            patternSelect.value = patterns[Math.floor(Math.random() * patterns.length)];
+            colorSelect.value = colors[Math.floor(Math.random() * colors.length)];
+            sequenceSelect.value = sequences[Math.floor(Math.random() * sequences.length)];
+            
+            innerZoneSelect.value = zoneAnims[Math.floor(Math.random() * zoneAnims.length)];
+            middleZoneSelect.value = zoneAnims[Math.floor(Math.random() * zoneAnims.length)];
+            outerZoneSelect.value = zoneAnims[Math.floor(Math.random() * zoneAnims.length)];
+            
+            // Trigger display toggle check
+            sequenceSelect.dispatchEvent(new Event('change'));
+            
+            densitySlider.value = Math.floor(Math.random() * 8) + 2;
+            densityVal.textContent = densitySlider.value;
+            
+            speedSlider.value = Math.floor(Math.random() * 80) + 10;
+            speedVal.dispatchEvent(new Event('input')); // Update label text based on context
+            
+            generatePattern();
+        });
+
+        // Initialize
+        resizeCanvas(); // This also calls generatePattern()
+        animate();      // Start loop
+
+    </script>
 </body>
 </html>
-
