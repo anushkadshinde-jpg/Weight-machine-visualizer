@@ -84,6 +84,7 @@
                 <option value="aurora">Aurora Borealis (Cool)</option>
                 <option value="fireice">Fire & Ice</option>
                 <option value="spectrum">Full Spectrum</option>
+                <option value="custom5">Neon Burst</option>
             </select>
         </div>
 
@@ -416,14 +417,24 @@
                     s = 100;
                     break;
                 case 'spectrum':
-                    // Full rainbow based on angle
-                    h = (angle * 180 / Math.PI + 360) % 360;
-                    break;
-                default:
-                    h = 0;
-            }
-            return {h, s, l};
-        }
+            h = (angle * 180 / Math.PI + 360) % 360;
+            break;
+        case 'custom5':
+            // Returns early with rgb instead of hsl
+            const colors5 = [
+                '255, 0, 0',    // FF0000 Red
+                '5, 255, 0',    // 05FF00 Green
+                '0, 13, 255',   // 000DFF Blue
+                '255, 145, 0',  // FF9100 Orange
+                '255, 0, 234',  // FF00EA Pink
+            ];
+            const idx = Math.min(Math.floor(normalizedDist * 5), 4);
+            return { rgb: colors5[idx] };
+        default:
+            h = 0;
+    }
+    return {h, s, l};
+}
 
         // Generate the dot matrix logic
         function generatePattern() {
@@ -600,17 +611,25 @@
                 ctx.fill();
 
                 if (intensity > 0.05) {
-                    const {h, s, l} = b.color;
-                    
-                    // 2. Glow (Shadow)
-                    ctx.shadowBlur = 20 * intensity;
-                    ctx.shadowColor = `hsl(${h}, ${s}%, ${l}%)`;
-                    
-                    // 3. Colored Body
-                    ctx.beginPath();
-                    ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
-                    ctx.fillStyle = `hsla(${h}, ${s}%, ${l}%, ${intensity * 0.9})`;
-                    ctx.fill();
+                    cconst col = b.color;
+const colorStr = col.rgb
+    ? col.rgb
+    : `${col.h}, ${col.s}%, ${col.l}%`;
+const shadowStr = col.rgb
+    ? `rgb(${col.rgb})`
+    : `hsl(${col.h}, ${col.s}%, ${col.l}%)`;
+const fillStr = col.rgb
+    ? `rgba(${col.rgb}, ${intensity * 0.9})`
+    : `hsla(${col.h}, ${col.s}%, ${col.l}%, ${intensity * 0.9})`;
+
+// 2. Glow (Shadow)
+ctx.shadowBlur = 20 * intensity;
+ctx.shadowColor = shadowStr;
+
+// 3. Colored Body
+ctx.beginPath();
+ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
+ctx.fillStyle = fillStr;
 
                     // 4. Bright Core (Simulates the actual diode)
                     ctx.shadowBlur = 0; // Disable shadow for core
