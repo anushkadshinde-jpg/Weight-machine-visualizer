@@ -167,7 +167,7 @@
     <div class="flex-1 relative w-full h-full flex justify-center items-center overflow-hidden z-10" id="mainContainer">
         <div class="relative w-full h-full flex justify-center items-center" id="imageWrapper">
             <img src="FREDAGAIN.png" id="bgImage" class="max-h-full max-w-full object-contain pointer-events-none z-10" alt="Hardware Background">
-            <div id="canvasOverlay" class="absolute rounded-full overflow-hidden z-20" style="display: none; transform: translate(-50%, -50%);">
+           <div id="canvasOverlay" class="absolute rounded-full overflow-hidden z-20" style="display: none; transform: translate(-50%, -50%); mix-blend-mode: screen;">
                 <canvas id="visualizerCanvas" class="w-full h-full block"></canvas>
             </div>
         </div>
@@ -528,12 +528,7 @@
                 const maxBulbRadius = (smallestDim() * 0.005) + (baseBulbSize * 0.5);
                 const currentRadius = maxBulbRadius * 0.4 + (maxBulbRadius * 0.6 * intensity);
 
-                // 1. Base 'Off' state (physical dome)
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, maxBulbRadius * 0.8, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(10, 10, 10, 0.4)`;
-                ctx.fill();
-
+            
                 if (intensity > 0.05) {
                     const col = b.color;
                     const shadowStr = col.rgb
